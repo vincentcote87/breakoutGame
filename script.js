@@ -28,7 +28,11 @@ var score = 0;
 var randX = 0;
 var randY = 150;
 
+var lives = 3;
+var liveX = 30;
+
 var bricks = [];
+
 //brick colours
 var gradient = ctx.createLinearGradient(0,0,170,500);
 gradient.addColorStop("0","magenta");
@@ -76,11 +80,6 @@ function drawBricks(color) {
 				ctx.strokeStyle = color;
 				ctx.lineWidth=5;
 				ctx.strokeRect(brickX,brickY,BRICK_WIDTH,BRICK_HEIGHT);
-				/*ctx.beginPath();
-				ctx.rect(brickX, brickY, BRICK_WIDTH, BRICK_HEIGHT);
-				ctx.fillStyle = color;
-				ctx.fill();
-				ctx.closePath();*/
 			}
 			
 		}
@@ -109,6 +108,17 @@ function drawScore() {
 	ctx.fillText(score, randX, randY);
 }
 
+function drawLives(color) {
+	for(var i = 0; i < lives; i++) {
+		ctx.beginPath();
+		ctx.arc(liveX, 18, BALL_RADIUS, 0, Math.PI*2, false);
+		ctx.fillStyle =  color;
+		ctx.fill();
+		ctx.closePath();
+		liveX += 25;
+	}
+}
+
 function collisionDetection() {
 	for(var i = 0; i < brickColCount; i++) {
 		for(var j = 0; j < brickRowCount; j++) {
@@ -121,6 +131,10 @@ function collisionDetection() {
 				var mod = Math.floor(Math.random()*10000)+1;
 				randX = mod % 350;
 				randY = (mod % 430) + 150;
+				if(score === (brickRowCount * brickColCount * 100)) {
+					alert('YOU ACTUALLY WON THE GAME!! WELL DONE.');
+					document.location.reload();
+				}
 				}
 			}
 		}
@@ -128,16 +142,16 @@ function collisionDetection() {
 }
 
 function draw() {
+	liveX = 30;
 	ctx.clearRect(0, 0, canvas.width, canvas.height);
 	ctx.fillStyle = grd;
 	ctx.fillRect(0,0,canvas.width, canvas.height);
 	drawScore();
 	drawBricks(gradient);
 	if(another) {drawBall('#FFFFFF');}
-	drawPaddle('#4730E5');
+	drawPaddle('#e6b800');
 	collisionDetection();
-	
-
+	drawLives('#FFFFFF');
 
 	if(y + dy < BALL_RADIUS) {
 		dy = -dy;
@@ -147,15 +161,25 @@ function draw() {
 			var deltaX = x - (paddleX+PADDLE_WIDTH/2);
 				dx = deltaX * 0.15;
 		} else {
-			alert('Game Over');
-			if(confirm('Another game?')){
-				document.location.reload();
+			lives--;
+			if(!lives) {
+				alert('Game Over');
+				if(confirm('Another game?')){
+					document.location.reload();
+				} else {
+					x = 0;
+					y = 0;
+					another = false;
+					return;
+				}
 			} else {
-				x = 0;
-				y = 0;
-				another = false;
-				return;
+				x = canvas.width/2;
+				y = canvas.height - 30;
+				dx = 2; 
+				dy = -2;
+				paddleX = (canvas.width - PADDLE_WIDTH)/2;
 			}
+		
 		}
 		
 	}
@@ -171,6 +195,20 @@ function draw() {
 
 	x += dx;
 	y += dy;
+	//requestAnimationFrame(draw);
 }
+document.addEventListener("mousemove", mouseHandler);
 
+function mouseHandler(e)	{
+	var relativeX = e.clientX - canvas.offsetLeft;
+	if(relativeX > 0 && relativeX < canvas.width) {
+		paddleX = relativeX - PADDLE_WIDTH/2;
+		if(paddleX < 0) {
+			paddleX  = 0;
+		} else if(paddleX > canvas.width - PADDLE_WIDTH) {
+			paddleX = canvas.width - PADDLE_WIDTH;
+		}
+	}
+}
+//draw();
 setInterval(draw, 10);
